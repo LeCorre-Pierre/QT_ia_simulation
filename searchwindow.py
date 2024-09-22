@@ -2,8 +2,13 @@ from PyQt5.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QHBoxLayout, QLabel, QDoubleSpinBox, QSpinBox,
     QPushButton, QListWidget, QMenu, QMessageBox, QTextEdit
 )
+from PyQt5.QtCore import Qt, QTimer
 import sys
-
+import threading
+from IA_QListWidgetItem import *
+from deap_evaluation import *
+import queue
+from map import *
 
 class SearchWindow(QDialog):
     def __init__(self):
@@ -11,6 +16,16 @@ class SearchWindow(QDialog):
         self.setWindowTitle("Recherche IA")
         self.setGeometry(200, 200, 600, 400)  # Élargi pour inclure la liste et les logs
         self.initUI()
+
+        self.search_thread = None
+        self.running = False  # Variable pour contrôler le thread
+
+    def get_ia_list_items(self):
+        ia_list = []
+        for index in range(self.ia_list.count()):
+            ia_item = self.ia_list.item(index)  # Récupère l'IAListWidgetItem
+            ia_list.append(ia_item.individual)
+        return ia_list
 
     def initUI(self):
         main_layout = QVBoxLayout(self)
@@ -20,6 +35,13 @@ class SearchWindow(QDialog):
 
         # Layout gauche pour les paramètres de la recherche
         param_layout = QVBoxLayout()
+
+        # Nombre de générations
+        param_layout.addWidget(QLabel("Nombre de générations:"))
+        self.num_generation = QSpinBox()
+        self.num_generation.setRange(1, 10000)
+        self.num_generation.setValue(50)  # Valeur par défaut
+        param_layout.addWidget(self.num_generation)
 
         # Taux de mutation
         param_layout.addWidget(QLabel("Taux de mutation (0 à 1):"))
@@ -74,13 +96,10 @@ class SearchWindow(QDialog):
         # Liste des IA
         self.ia_list = QListWidget()
         self.ia_list.setContextMenuPolicy(3)  # Pour le clic droit
+        self.ia_list.setSelectionMode(QListWidget.MultiSelection)
         self.ia_list.customContextMenuRequested.connect(self.context_menu)
         ia_layout.addWidget(QLabel("Liste des IA :"))
         ia_layout.addWidget(self.ia_list)
-
-        # Ajouter des IA fictives pour l'illustration
-        for i in range(3):
-            self.ia_list.addItem(f"IA {i+1}")
 
         top_layout.addLayout(ia_layout)
 
@@ -92,6 +111,90 @@ class SearchWindow(QDialog):
         main_layout.addWidget(QLabel("Logs :"))
         main_layout.addWidget(self.log_output)
 
+    def start_search(self):
+        if self.search_thread is not None and self.search_thread.is_alive():
+            QMessageBox.warning(self, "Alerte", "La recherche est déjà en cours.")
+            return
+
+        # Logs pour les paramètres
+        self.log_output.append("Recherche lancée avec les paramètres:")
+        self.log_output.append(f"Nombre de générations: {self.num_generation.value()}")
+        self.log_output.append(f"Taux de mutation: {self.mutation_rate.value()}")
+        self.log_output.append(f"Taux de croisement: {self.crossover_rate.value()}")
+        self.log_output.append(f"Nombre d'IA: {self.num_ia.value()}")
+        self.log_output.append(f"Nombre de tours: {self.num_turns.value()}")
+        self.log_output.append(f"Nombre de personnes: {self.num_players.value()}")
+
+        # Récupérer les valeurs des paramètres
+        nb_gener = self.num_generation.value()
+        nb_ia_per_gen = self.num_ia.value()
+        mutpb = self.mutation_rate.value()
+        cxpb = self.crossover_rate.value()
+        nb_turn_per_simulation = self.num_turns.value()
+        nb_characters = self.num_players.value()
+        IAs = self.get_ia_list_items()
+        m = Map()
+        m.load_map_from_file("maps/map_0.txt")
+
+        result_queue = queue.Queue()
+        # Démarrer le thread
+        self.running = True
+        self.search_thread = threading.Thread(
+            target=run_evolution,
+            args=(nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, nb_characters, IAs, result_queue, m.map_data)
+        )
+        self.search_thread.start()
+
+        # Utiliser un timer pour vérifier si le thread a terminé sans bloquer l'interface
+        self.timer = QTimer()
+        self.timer.timeout.connect(lambda: self.check_thread_completion(result_queue))
+        self.timer.start(100)  # Vérifier toutes les 100 millisecondes
+
+    def check_thread_completion(self, result_queue):
+        if not self.search_thread.is_alive():  # Si le thread a terminé
+            self.timer.stop()  # Arrêter le timer
+            population = result_queue.get()  # Récupérer le résultat
+            self.callback_per_gen_search_window(population)
+            self.sort_ia_list()
+
+    def stop_search(self):
+        if self.search_thread and self.search_thread.is_alive():
+            # Logique pour arrêter la recherche
+            self.running = False
+            self.search_thread.join()  # Attendre que le thread se termine
+            self.log_output.append("Recherche arrêtée.")
+
+    def callback_per_gen_search_window(self, population):
+        # Sélectionner les 10 meilleurs individus
+        best_inds = tools.selBest(population, 10)
+
+        # Ajouter chaque meilleur individu à la liste
+        for best_ind in best_inds:
+            fitness = best_ind.fitness.values[0]
+            item = IAListWidgetItem(best_ind, fitness)
+            self.ia_list.addItem(item)
+
+    def sort_ia_list(self):
+        # Récupérer tous les items dans une liste
+        items = []
+        for index in range(self.ia_list.count()):
+            item = self.ia_list.item(index)
+            # Créer une copie de l'IAListWidgetItem pour éviter la suppression après clear()
+            new_item = IAListWidgetItem(item.individual, item.fitness)
+            items.append(new_item)
+
+        # Trier les items par fitness
+        items.sort(key=lambda x: x.fitness, reverse=True)  # Tri décroissant par fitness
+
+        # Vider la liste
+        self.ia_list.clear()
+
+        # Ajouter les items triés à la liste
+        for sorted_item in items:
+            self.ia_list.addItem(sorted_item)
+
+
+
     def context_menu(self, position):
         menu = QMenu()
         delete_action = menu.addAction("Supprimer")
@@ -100,32 +203,20 @@ class SearchWindow(QDialog):
         action = menu.exec_(self.ia_list.viewport().mapToGlobal(position))
 
         if action == delete_action:
-            selected_items = self.ia_list.selectedItems()
+            selected_items = self.ia_list.selectedItems()  # Récupère les éléments sélectionnés
+            if not selected_items:
+                return
+
             for item in selected_items:
-                self.ia_list.takeItem(self.ia_list.row(item))
-            self.log_output.append("IA supprimée.")
+                self.ia_list.takeItem(self.ia_list.row(item))  # Supprime chaque élément
 
         elif action == save_action:
-            selected_item = self.ia_list.currentItem()
-            if selected_item:
-                self.log_output.append(f"IA {selected_item.text()} sauvegardée.")
-            else:
-                QMessageBox.warning(self, "Erreur", "Aucune IA sélectionnée.")
+            selected_items = self.ia_list.selectedItems()
+            if not selected_items:
+                return
 
-    def start_search(self):
-        # Lancer la simulation de recherche ici
-        self.log_output.append("Recherche lancée avec les paramètres:")
-        self.log_output.append(f"Taux de mutation: {self.mutation_rate.value()}")
-        self.log_output.append(f"Taux de croisement: {self.crossover_rate.value()}")
-        self.log_output.append(f"Nombre d'IA: {self.num_ia.value()}")
-        self.log_output.append(f"Nombre de tours: {self.num_turns.value()}")
-        self.log_output.append(f"Nombre de personnes: {self.num_players.value()}")
-        # Code pour démarrer la simulation ici
-
-    def stop_search(self):
-        # Arrêter la simulation de recherche
-        self.log_output.append("Recherche arrêtée")
-        # Code pour stopper la simulation ici
+            for item in selected_items:
+                self.log_output.append(f"IA {item.text()} sauvegardée.")
 
 
 if __name__ == "__main__":
