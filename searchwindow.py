@@ -11,7 +11,7 @@ import queue
 from map import *
 
 class SearchWindow(QDialog):
-    def __init__(self):
+    def __init__(self, ias):
         super().__init__()
         self.setWindowTitle("Recherche IA")
         self.setGeometry(200, 200, 600, 400)  # Élargi pour inclure la liste et les logs
@@ -19,6 +19,17 @@ class SearchWindow(QDialog):
 
         self.search_thread = None
         self.running = False  # Variable pour contrôler le thread
+
+        # Ajout des IA à la liste
+        for ia in ias:
+            # Vérifiez que ia est un IAListWidgetItem avant de l'ajouter
+            if isinstance(ia, IAListWidgetItem):
+                # Créer une copie de l'élément
+                ia_copy = IAListWidgetItem(ia.individual, ia.fitness)
+                self.ia_list.addItem(ia_copy)
+                print(f"Adding : {ia_copy} ")
+            else:
+                print(f"Erreur : {ia} n'est pas une IAListWidgetItem valide.")
 
     def get_ia_list_items(self):
         ia_list = []
@@ -100,6 +111,7 @@ class SearchWindow(QDialog):
         self.ia_list.customContextMenuRequested.connect(self.context_menu)
         ia_layout.addWidget(QLabel("Liste des IA :"))
         ia_layout.addWidget(self.ia_list)
+
 
         top_layout.addLayout(ia_layout)
 
@@ -217,6 +229,7 @@ class SearchWindow(QDialog):
 
             for item in selected_items:
                 self.log_output.append(f"IA {item.text()} sauvegardée.")
+                item.save_to_file()
 
 
 if __name__ == "__main__":
