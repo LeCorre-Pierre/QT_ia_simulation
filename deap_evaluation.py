@@ -1,7 +1,6 @@
 from deap import base, creator, tools, algorithms
+from neural_network_controller import *
 import functools
-import random
-import numpy as np
 
 
 def generate_individual(IAs):
@@ -20,7 +19,8 @@ def generate_individual(IAs):
     # Vérifier si la liste des IA est vide
     if not IAs:
         # Si la liste est vide, générer un individu avec des valeurs aléatoires
-        return [random.uniform(-1, 1) for _ in range(58)]  # Remplissage aléatoire
+        num_weights = NNC_TOTAL_WEIGHT_NUMBER
+        return [random.uniform(-1, 1) for _ in range(num_weights)]  # Remplissage aléatoire
     else:
         # Choisir une IA à partir de la liste, en utilisant modulo pour la répétition
         ia = IAs[random.randint(0, len(IAs) - 1)]  # Choisir aléatoirement une IA
@@ -29,7 +29,7 @@ def generate_individual(IAs):
 
 
 def evaluate_individual(individual, nb_turn_per_simulation, nb_characters, map_data):
-    return random.randint(10, 1000),
+
     nn_controller = NeuralNetworkController(58, 32, 32, 5)
 
     # Initialiser le contrôleur de réseau de neurones avec les poids de l'individu

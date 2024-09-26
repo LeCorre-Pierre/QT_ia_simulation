@@ -10,6 +10,7 @@ from deap_evaluation import *
 import queue
 from map import *
 
+
 class SearchWindow(QDialog):
     def __init__(self, ias):
         super().__init__()
@@ -112,7 +113,6 @@ class SearchWindow(QDialog):
         ia_layout.addWidget(QLabel("Liste des IA :"))
         ia_layout.addWidget(self.ia_list)
 
-
         top_layout.addLayout(ia_layout)
 
         main_layout.addLayout(top_layout)
@@ -153,7 +153,8 @@ class SearchWindow(QDialog):
         self.running = True
         self.search_thread = threading.Thread(
             target=run_evolution,
-            args=(nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, nb_characters, IAs, result_queue, m.map_data)
+            args=(
+            nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, nb_characters, IAs, result_queue, m.map_data)
         )
         self.search_thread.start()
 
@@ -204,8 +205,6 @@ class SearchWindow(QDialog):
         # Ajouter les items triés à la liste
         for sorted_item in items:
             self.ia_list.addItem(sorted_item)
-
-
 
     def context_menu(self, position):
         menu = QMenu()
