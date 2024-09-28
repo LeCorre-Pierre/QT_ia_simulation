@@ -5,10 +5,9 @@ from movement_strategy import *
 
 
 class Game:
-    def __init__(self, map_file, game_turn_number, characters_number=1):
+    def __init__(self, map_data, game_turn_number, characters_number=1):
         self.game_turn_number = game_turn_number
-        self.map = Map()
-        self.map.load_map_from_file(map_file)
+        self.map = Map(map_data)
         self.starting_points = self.map.get_starting_positions()
         self.characters = []
         self.score = 0
@@ -18,7 +17,7 @@ class Game:
             self.characters.append(c)
         self.turn_states = []
 
-    def run(self, callback_action_selection, save=False):
+    def run(self, callback_self, callback_action_selection, save=False):
 
         visited_positions = set()
 
@@ -34,7 +33,7 @@ class Game:
             for c in self.characters:
                 if c.energy > 0:
                     all_characters_out_of_energy = False  # Si un personnage a encore de l'énergie
-                    action = callback_action_selection(c, self.map, [], [], self.map.get_starting_positions())
+                    action = callback_action_selection(callback_self, c, self.map, [], [], self.map.get_starting_positions())
                     c.perform_action(action)
                 else:
                     c.perform_action("WAIT")
@@ -67,28 +66,7 @@ class Game:
         # La fitness de l'individu est basée sur le score du jeu
         fitness = self.score
 
-        return fitness,
-
-
-
-
-        self.save_state() #état initial
-        for i in range(self.game_turn_number):
-            self.map.update()
-            for c in self.characters:
-                c.update()
-                x, y = c.get_pos()
-                if self.map.is_flower(x,y) and not c.is_full():
-                    self.map.cut_flower(x, y)
-                    c.collect_flower()
-                else:
-                    self.map.trample(x, y)
-
-                if self.map.is_on_starting_point(x,y):
-                    self.score += c.energy
-                    c.drop_flowers()
-            # Sauvegarder l'état après chaque tour
-            self.save_state()
+        return fitness
 
     def save_state(self, score, input_vector):
         """

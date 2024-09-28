@@ -241,9 +241,9 @@ class NeuralNetworkController:
         game = Game(map_data, nb_turn_per_simulation, nb_characters)
 
         # Exécuter la simulation du jeu
-        fitness = game.run(callback_action_selection)
+        fitness = game.run(self, callback_action_selection)
 
-        return fitness,
+        return fitness
 
 if __name__ == "__main__":
     m = Map()

@@ -35,10 +35,14 @@ MAP_STARTPOINT = 28
 
 
 class Map:
-    def __init__(self):
+    def __init__(self, map_data=[]):
         self.map_size = 16
-        self.map_data = []
+        if map_data:
+            self.map_data = [row[:] for row in map_data]  # par exemple
+        else:
+            self.map_data = []
         self.starting_positions = None
+
 
     def clone(self):
         # Assurez-vous de copier profondément toutes les données nécessaires

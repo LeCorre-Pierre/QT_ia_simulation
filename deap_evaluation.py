@@ -75,7 +75,6 @@ def run_evolution(nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, 
     stats.register("std", np.std)
     stats.register("min", np.min)
     stats.register("max", np.max)
-
     popu = None
     try:
         popu, log = algorithms.eaSimple(population,
@@ -87,5 +86,4 @@ def run_evolution(nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, 
                                         verbose=True)
     except StopIteration:
         print("Évolution stoppée par l'utilisateur.")
-
     result_queue.put(popu)  # Met le résultat dans la queue
