@@ -24,9 +24,10 @@ On peut faire une sauvegarder vers l'interface principale en faisant bbouton dro
 Si des ia de meilleures qualités sont trouvées, elles sont sauvegardées et remplacent directement les obsoletes.
 2) Observer une IA
 En sélectionnant une IA et en appuyant sur le bouton "Observer", une nouvelle fenetre s'ouvre qui permet d'observer le 
-comportement de l'IA sélectionnée dans une carte. LA carte par defaut est utilisée et une liste permet en cliquant dessus de changer de carte rapidement
+comportement de l'IA sélectionnée dans une carte.
 Dans cette interface, on peut observer, a chaque tour, l'état de la carte, le score, le personnage, l'état du reseau neuronnal ainsi
-que la prochaine action du personnage. Les tours peuvent être manipulés avec un slider ou les fleches gauches et droites du clavier
+que la prochaine action du personnage. Les tours peuvent être manipulés avec un slider ou les fleches gauches et droites du clavier.
+Dans le log, les différentes actions sont indiquées
 
 Précision sur les simulations
 Les simulations sont basées sur le module DEAP

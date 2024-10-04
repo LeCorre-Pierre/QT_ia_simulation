@@ -1,0 +1,13 @@
+The tiles are 16 x 16px and have a 1px margin between them.
+
+---
+
+TILE SIZE: 16 x 16
+MARGIN:	   1
+54 x 12
+
+Prefab characters are 0x5 to 1x11
+Empty characters are from 0 to 1
+Pants are from  3 to 4
+Armors are from 6 to 17
+helmets are from 28 to 31

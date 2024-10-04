@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
 import sys
 
 import IA_QListWidgetItem
+import observwindow
 import searchwindow
 
 
@@ -88,6 +89,8 @@ class MainWindow(QMainWindow):
         if not selected_ia:
             QMessageBox.warning(self, "Alerte", "Veuillez sélectionner une IA à observer.")
             return
+        replay_window = observwindow.ReplayWindow()
+        replay_window.exec_()
         # Ouvrir une nouvelle fenêtre pour observer l'IA sélectionnée
         print(f"Observation de l'IA : {selected_ia.text()}")
 
