@@ -1,8 +1,9 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QSlider, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
-
+import character_gui
 import tilemanager
+import map
 
 class SimulationViewer(QFrame):
     def __init__(self):
@@ -26,10 +27,17 @@ class SimulationViewer(QFrame):
         self.main_layout.addWidget(self.turn_label)
 
         # Ajouter un espace vide pour le futur usage (la partie graphique avec la carte, etc.)
-        #self.game_frame = mapframe.MapFrame(self)
-        #self.game_frame.setFrameShape(QFrame.StyledPanel)  # Un cadre simple pour l'instant
-        #self.game_frame.setFixedSize(600, 400)  # Ajuste la taille selon tes besoins
-        #self.main_layout.addWidget(self.game_frame)
+        self.scale_factor = 2
+        self.map = map.Map()
+        self.map.load_map_from_file("maps/map_0.txt")
+        self.tile_manager = character_gui.TileMapManager("tiles/tilemap.png", tile_size=16, spacing=1, scale_factor=self.scale_factor)  # Chargement du tileset
+
+        self.map_widget = character_gui.MapWidget(self.map, self.tile_manager, self.scale_factor)  # Passer le TileManager
+
+        self.map.load_map_from_file("maps/map_0.txt")
+        self.map_widget.repaint()  # Redessiner le widget avec la nouvelle carte
+
+        self.main_layout.addWidget(self.map_widget)
 
         # Slider pour naviguer entre les tours (de 0 à 200)
         self.turn_slider = QSlider(Qt.Horizontal)
@@ -46,11 +54,12 @@ class SimulationViewer(QFrame):
         self.setLayout(self.main_layout)
 
 
+
+
 if __name__ == "__main__":
-    global_tilemanager = tilemanager.TileManager()
-    global_tilemanager.load_character_tiles("tiles/roguelikeChar_transparent.png")
-    global_tilemanager.load_map_tiles("tiles/roguelikeMap_transparent.png")
     app = QApplication(sys.argv)
-    viewer = SimulationViewer()
-    viewer.show()
-    sys.exit(app.exec_())
+
+    window1 = SimulationViewer()
+    window1.show()
+
+    app.exec_()

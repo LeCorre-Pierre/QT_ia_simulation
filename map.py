@@ -1,5 +1,4 @@
 import random
-#from tiles import *
 
 map_debug = False
 

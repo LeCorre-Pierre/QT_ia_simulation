@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
 import sys
 
 import IA_QListWidgetItem
-import observwindow
+
 import searchwindow
 
 
@@ -38,10 +38,6 @@ class MainWindow(QMainWindow):
         self.search_button = QPushButton("Rechercher")
         self.search_button.clicked.connect(self.open_search_window)
         button_layout.addWidget(self.search_button)
-
-        self.observe_button = QPushButton("Observer")
-        self.observe_button.clicked.connect(self.observe_ia)
-        button_layout.addWidget(self.observe_button)
 
         layout.addLayout(button_layout)
 
@@ -84,15 +80,6 @@ class MainWindow(QMainWindow):
         self.search_window.exec_()
         self.load_saved_ias()
 
-    def observe_ia(self):
-        selected_ia = self.best_ia_list.currentItem()
-        if not selected_ia:
-            QMessageBox.warning(self, "Alerte", "Veuillez sélectionner une IA à observer.")
-            return
-        replay_window = observwindow.ReplayWindow()
-        replay_window.exec_()
-        # Ouvrir une nouvelle fenêtre pour observer l'IA sélectionnée
-        print(f"Observation de l'IA : {selected_ia.text()}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
