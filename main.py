@@ -2,7 +2,7 @@ import os
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton, QListWidget, QLabel, QSlider,
-    QComboBox, QTabWidget, QMessageBox, QMenu
+    QComboBox, QTabWidget, QMessageBox, QMenu, QFrame
 )
 import sys
 
@@ -22,16 +22,19 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
-        # Layout principal
-        layout = QVBoxLayout(self.central_widget)
+        # Layout principal avec un QHBoxLayout pour séparer la liste des IA et le QFrame à droite
+        main_layout = QHBoxLayout(self.central_widget)
+
+        # Partie gauche avec la liste des meilleures IA
+        left_layout = QVBoxLayout()
 
         # Liste des meilleures IA
         self.best_ia_list = QListWidget()
         self.best_ia_list.setContextMenuPolicy(3)  # Pour le clic droit
         self.best_ia_list.setSelectionMode(QListWidget.MultiSelection)
         self.best_ia_list.customContextMenuRequested.connect(self.context_menu)
-        layout.addWidget(QLabel("Meilleures IA :"))
-        layout.addWidget(self.best_ia_list)
+        left_layout.addWidget(QLabel("Meilleures IA :"))
+        left_layout.addWidget(self.best_ia_list)
 
         # Boutons pour les actions
         button_layout = QHBoxLayout()
@@ -39,7 +42,18 @@ class MainWindow(QMainWindow):
         self.search_button.clicked.connect(self.open_search_window)
         button_layout.addWidget(self.search_button)
 
-        layout.addLayout(button_layout)
+        left_layout.addLayout(button_layout)
+
+        # Ajout de la partie gauche (liste des IA et boutons) au layout principal
+        main_layout.addLayout(left_layout)
+
+        # Partie droite avec un QFrame pour afficher des informations supplémentaires
+        self.info_frame = QFrame(self)
+        self.info_frame.setFrameShape(QFrame.StyledPanel)  # Bordure stylisée pour le cadre
+        self.info_frame.setMinimumWidth(600)  # Largeur minimale pour la frame
+
+        # Ajout de la frame au layout principal
+        main_layout.addWidget(self.info_frame)
 
         # Charger les IA sauvegardées
         self.load_saved_ias()
