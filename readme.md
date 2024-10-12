@@ -22,7 +22,17 @@ contient que 10 éléments.
 On peut supprimer les ia de cette liste en faisant bouton droit supprimer.
 On peut faire une sauvegarder vers l'interface principale en faisant bbouton droit sauvegarde
 Si des ia de meilleures qualités sont trouvées, elles sont sauvegardées et remplacent directement les obsoletes.
-2) Observer une IA
+2) Affichage infini
+Sur la fenetre principale se trouve un affichage de map par default.
+Cet espace est appelé "jeu infini". Il est composé sur la partie haute d'un bouton reset qui permet de remettre la carte dans son état par defaut,
+d'un bouton de sélection de la carte ainsi que slider permettant de régler la vitesse de défilement du temps entre 100 ms et 1000ms par step de 200ms.
+Pour finir un bouton Pause/Resume permet de mettre en pause cet fenetre et d'enlever la pause.
+Dans la partie basse de cette fenetre se trouve la carte. La carte se met à jour automatiquement en continu à la vitesse indiquée par le slider.
+l'utilisateur en cliquant sur la carte fait apparaitre un personnage à cet endroit. Pour se déplacer le personnage est controlé par l'ia qui est sélectionnée
+dans la fenetre principale. Une fois que le personnage est épuisé (energie 0), il est retiré. L'utilisateur peut tout à fait insérer plusieurs
+personnage
+
+
 En sélectionnant une IA et en appuyant sur le bouton "Observer", une nouvelle fenetre s'ouvre qui permet d'observer le 
 comportement de l'IA sélectionnée dans une carte.
 Dans cette interface, on peut observer, a chaque tour, l'état de la carte, le score, le personnage, l'état du reseau neuronnal ainsi

@@ -1,7 +1,7 @@
 import os
 from PyQt5.QtWidgets import QApplication, QMainWindow,QLabel, QSlider, QFrame, QVBoxLayout, QPushButton, QWidget, QFileDialog
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QMouseEvent
+from PyQt5.QtCore import Qt, QPoint, pyqtSignal
 from map import *
 import sys
 
@@ -124,6 +124,8 @@ class Map:
             self.map_data = [list(map(int, line.strip().split())) for line in file.readlines()]
 
 class MapWidget(QFrame):
+    clicked_on_map = pyqtSignal(QPoint)  # Signal émis lorsqu'il y a un clic sur la carte
+
     def __init__(self, game_map, tile_manager, scale_factor=6):
         super().__init__()
         self.game_map = game_map
@@ -164,6 +166,36 @@ class MapWidget(QFrame):
                     x = 4 + col_index * (tile_size + 1)
                     y = 4 + row_index * (tile_size + 1 )
                     painter.drawPixmap(x, y, tile)  # Dessiner la tuile
+
+
+    def mousePressEvent(self, event: QMouseEvent):
+        # Capture l'événement de clic et émet le signal avec la position du clic
+        mouse_pos = event.pos()  # Récupère la position du clic
+        grid_pos =self.convert_to_grid(mouse_pos)
+        if grid_pos is not None:
+            self.clicked_on_map.emit(grid_pos)  # Émet le signal avec la position du clic
+
+    def convert_to_grid(self, mouse_pos: QPoint):
+        tile_size = self.tile_manager.tile_size * self.scale_factor
+        x, y = mouse_pos.x(), mouse_pos.y()
+
+        # Prendre en compte les bordures
+        x -= self.border_size
+        y -= self.border_size
+
+        # Vérifier que le clic est dans les limites de la carte (hors bordures)
+        if x < 0 or y < 0 or x >= self.map_width - self.border_size or y >= self.map_height - self.border_size:
+            return None  # Clic hors de la carte
+
+        # Calculer la position dans la grille (prendre en compte l'espacement entre les tuiles)
+        grid_x = x // (tile_size + self.intertilespace_size)
+        grid_y = y // (tile_size + self.intertilespace_size)
+
+        # Vérifier que la position calculée est bien dans la grille
+        if grid_x >= len(self.game_map.map_data[0]) or grid_y >= len(self.game_map.map_data):
+            return None  # Clic hors de la grille
+
+        return QPoint(grid_x, grid_y)
 
 class MapWindow(QMainWindow):
     def __init__(self):

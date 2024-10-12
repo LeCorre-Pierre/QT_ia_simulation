@@ -4,18 +4,21 @@ from PyQt5.QtWidgets import (
     QHBoxLayout, QPushButton, QListWidget, QLabel, QSlider,
     QComboBox, QTabWidget, QMessageBox, QMenu, QFrame
 )
+from PyQt5.QtCore import pyqtSignal
 import sys
 
 import IA_QListWidgetItem
-
+import infinitegameframe
 import searchwindow
 
 
 class MainWindow(QMainWindow):
+    ia_selected_signal = pyqtSignal(IA_QListWidgetItem.IAListWidgetItem)  # Signal pour envoyer la liste des IA sélectionnées
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Simulation des IA")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 800, 600)    # Connexion du signal pour sélectionner une IA
         self.initUI()
 
     def initUI(self):
@@ -48,15 +51,15 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(left_layout)
 
         # Partie droite avec un QFrame pour afficher des informations supplémentaires
-        self.info_frame = QFrame(self)
-        self.info_frame.setFrameShape(QFrame.StyledPanel)  # Bordure stylisée pour le cadre
-        self.info_frame.setMinimumWidth(600)  # Largeur minimale pour la frame
+        self.infinitegame_frame = infinitegameframe.InfiniteGameFrame()
 
         # Ajout de la frame au layout principal
-        main_layout.addWidget(self.info_frame)
+        main_layout.addWidget(self.infinitegame_frame)
 
         # Charger les IA sauvegardées
         self.load_saved_ias()
+        self.best_ia_list.itemSelectionChanged.connect(self.on_selection_changed)
+        self.ia_selected_signal.connect(self.infinitegame_frame.set_selected_ia)
 
     def load_saved_ias(self):
         self.best_ia_list.clear()  # On vide d'abord la liste actuelle
@@ -94,6 +97,16 @@ class MainWindow(QMainWindow):
         self.search_window.exec_()
         self.load_saved_ias()
 
+    def on_selection_changed(self):
+        # Vérifier si un élément est sélectionné
+        selected_items = self.best_ia_list.selectedItems()
+
+        if selected_items:  # Si quelque chose est sélectionné
+            # Récupérer le premier élément sélectionné
+            first_selected_item = selected_items[0]
+
+            # Émettre le signal avec l'IA sélectionnée
+            self.ia_selected_signal.emit(first_selected_item)  # Émettre l'IA ou un autre objet
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
