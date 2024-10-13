@@ -1,5 +1,5 @@
 import os
-from PyQt5.QtWidgets import QApplication, QMainWindow,QLabel, QSlider, QFrame, QVBoxLayout, QPushButton, QWidget, QFileDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow,QLabel, QSlider, QFrame, QVBoxLayout, QPushButton, QWidget, QFileDialog, QGraphicsOpacityEffect
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QMouseEvent
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal
 from map import *
@@ -33,6 +33,14 @@ class TileCharacterManager:
                 tiles.append(QPixmap.fromImage(tile))
         return tiles
 
+    def paintEvent(self, widget, x, y):
+        """Méthode pour dessiner le personnage à la position définie."""
+        painter = QPainter(widget)
+        character_pixmap = self.prefab_characters[0]
+
+        # Dessine le personnage à la position spécifiée
+        painter.drawPixmap(x, y, character_pixmap)
+        painter.end()
 
 class CharacterDisplayWidget(QLabel):
     def __init__(self, tile_manager, parent=None):
@@ -141,7 +149,7 @@ class MapWidget(QFrame):
         self.setMaximumSize(self.map_width, self.map_height)
         self.scale_factor = scale_factor
 
-    def paintEvent(self, event):
+    def paintEvent2(self, event):
         painter = QPainter(self)
         tile_size = self.tile_manager.tile_size * self.scale_factor
         # Size = nb cell * size + interline nb * size + 2 borders
@@ -167,6 +175,7 @@ class MapWidget(QFrame):
                     y = 4 + row_index * (tile_size + 1 )
                     painter.drawPixmap(x, y, tile)  # Dessiner la tuile
 
+        painter.end()
 
     def mousePressEvent(self, event: QMouseEvent):
         # Capture l'événement de clic et émet le signal avec la position du clic

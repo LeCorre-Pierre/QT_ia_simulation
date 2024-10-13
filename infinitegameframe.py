@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QFrame, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QSlider, QFileDialog, QMessageBox
 )
 from PyQt5.QtCore import QTimer, Qt, QPoint
-from PyQt5.QtGui import QPainter, QColor, QMouseEvent
+from PyQt5.QtGui import QPainter, QColor, QMouseEvent, QPen
 import random
 import map
 import character_gui
@@ -32,7 +32,7 @@ class InfiniteGameFrame(QFrame):
 
         self.scale_factor = 2
         self.tile_manager = character_gui.TileMapManager("tiles/tilemap.png", tile_size=16, spacing=1, scale_factor=self.scale_factor)  # Chargement du tileset
-
+        self.tilechar_manager = character_gui.TileCharacterManager("tiles/roguelikeChar_transparent.png", 16, 16, spacing=1, scale_factor=self.scale_factor)
         self.tick_count = 0  # Compteur pour les ticks du timer
         self.characters = []
         self.movement_strategy = MapMovementStrategy(self.map.map_size)
@@ -82,7 +82,6 @@ class InfiniteGameFrame(QFrame):
         # Partie basse : Affichage de la carte (jeu infini)
         self.map_frame = character_gui.MapWidget(self.map, self.tile_manager,
                                                   self.scale_factor)  # Passer le TileManager
-        self.map_frame.setStyleSheet("background-color: lightgray;")  # Couleur de fond pour représenter la carte
         self.map_frame.clicked_on_map.connect(self.add_character)  # Connecte le signal à la méthode
         layout.addWidget(self.map_frame)
 
@@ -158,9 +157,21 @@ class InfiniteGameFrame(QFrame):
                     "Reset de l'énergie du personnage et dépose des fleur contre des points"
                     c.reset_energy()
                     if c.flowers:
-                        self.score += c.flowers * 100
                         c.drop_flowers()
-            self.update()  # Redessiner la carte avec les personnages
+        self.update()  # Redessiner la carte avec les personnages
 
     def paintEvent(self, event):
-        pass
+        painter = QPainter(self)
+        for character in self.characters:
+            x = character.x * self.grid_size * self.scale_factor
+            y = character.y * self.grid_size * self.scale_factor
+            character_pixmap = self.tilechar_manager.prefab_characters[2]  # Par exemple, utiliser le premier personnage
+
+            # Dessiner le personnage à la position x, y
+            painter.drawPixmap(x, y, character_pixmap)
+        painter.end()
+
+
+
+
+

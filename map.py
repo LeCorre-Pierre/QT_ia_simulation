@@ -60,8 +60,7 @@ class Map:
                     if tile == MAP_STARTPOINT:  # MAP_STARTPOINT est la valeur qui désigne les points de départ
                         starting_positions.append((x, y))
             self.starting_positions = starting_positions
-        else:
-            return self.starting_positions
+        return self.starting_positions
 
     def random_init(self):
         self.map_data = [[random.choice([MAP_GRASS_END, MAP_PLANT_START, MAP_PLANT_1, MAP_PLANT_2, MAP_PLANT_END, MAP_FLOWER_0]) for _ in range(self.map_size)] for _ in range(self.map_size)]
