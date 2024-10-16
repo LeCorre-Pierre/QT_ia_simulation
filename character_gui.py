@@ -33,14 +33,9 @@ class TileCharacterManager:
                 tiles.append(QPixmap.fromImage(tile))
         return tiles
 
-    def paintEvent(self, widget, x, y):
-        """Méthode pour dessiner le personnage à la position définie."""
-        painter = QPainter(widget)
-        character_pixmap = self.prefab_characters[0]
-
-        # Dessine le personnage à la position spécifiée
+    def draw(self, painter, x, y, character_index=0):
+        character_pixmap = self.prefab_characters[character_index]
         painter.drawPixmap(x, y, character_pixmap)
-        painter.end()
 
 class CharacterDisplayWidget(QLabel):
     def __init__(self, tile_manager, parent=None):
@@ -149,33 +144,37 @@ class MapWidget(QFrame):
         self.setMaximumSize(self.map_width, self.map_height)
         self.scale_factor = scale_factor
 
-    def paintEvent2(self, event):
-        painter = QPainter(self)
+    def draw(self, painter):
         tile_size = self.tile_manager.tile_size * self.scale_factor
         # Size = nb cell * size + interline nb * size + 2 borders
 
-        # Dessiner le fond
-        painter.fillRect(event.rect(), Qt.lightGray)  # Remplir le fond en blanc
+        # Obtenez la position du contrôle (widget) par rapport à son parent
+        map_pos = self.pos()
+        offset_x = map_pos.x()  # Position x de la carte dans l'interface
+        offset_y = map_pos.y()  # Position y de la carte dans l'interface
 
-        # Dessiner le tour
+        # Dessiner le contour (border) de la carte
         pen = QPen(Qt.black, self.border_size, Qt.SolidLine)
         painter.setPen(pen)
-        painter.drawLine(1, 1, self.map_width-1, 1)
-        painter.drawLine(1, 1, 1, self.map_height-1)
-        painter.drawLine(self.map_width-1, 1, self.map_width-1, self.map_height-1)
-        painter.drawLine(1, self.map_height-1, self.map_width-1, self.map_height-1)
 
-        # Dessiner les tuiles de la carte
+        # Ajuster les lignes du contour en fonction de l'offset
+        painter.drawLine(offset_x + 1, offset_y + 1, offset_x + self.map_width - 1, offset_y + 1)
+        painter.drawLine(offset_x + 1, offset_y + 1, offset_x + 1, offset_y + self.map_height - 1)
+        painter.drawLine(offset_x + self.map_width - 1, offset_y + 1, offset_x + self.map_width - 1,
+                         offset_y + self.map_height - 1)
+        painter.drawLine(offset_x + 1, offset_y + self.map_height - 1, offset_x + self.map_width - 1,
+                         offset_y + self.map_height - 1)
+
+        # Dessiner les tuiles de la carte en tenant compte de l'offset
         for row_index, row in enumerate(self.game_map.map_data):
             for col_index, map_value in enumerate(row):
                 tile_index = tile_mapping.get(map_value)
                 tile = self.tile_manager.get_tile(tile_index)
                 if tile:
-                    x = 4 + col_index * (tile_size + 1)
-                    y = 4 + row_index * (tile_size + 1 )
+                    # Calculer la position de chaque tuile avec l'offset
+                    x = offset_x + 4 + col_index * (tile_size + 1)
+                    y = offset_y + 4 + row_index * (tile_size + 1)
                     painter.drawPixmap(x, y, tile)  # Dessiner la tuile
-
-        painter.end()
 
     def mousePressEvent(self, event: QMouseEvent):
         # Capture l'événement de clic et émet le signal avec la position du clic
@@ -205,6 +204,26 @@ class MapWidget(QFrame):
             return None  # Clic hors de la grille
 
         return QPoint(grid_x, grid_y)
+
+    def convert_to_pixel(self, grid_x, grid_y):
+        tile_size = self.tile_manager.tile_size * self.scale_factor
+        map_pos = self.pos()
+        offset_x = map_pos.x()  # Position x de la carte dans l'interface
+        offset_y = map_pos.y()  # Position y de la carte dans l'interface
+
+        # Vérifier que la position de la grille est dans les limites de la carte
+        if grid_x < 0 or grid_y < 0 or grid_x >= len(self.game_map.map_data[0]) or grid_y >= len(self.game_map.map_data):
+            return None  # Position hors de la grille
+
+        # Calculer la position en pixels à partir de la position dans la grille
+        x = grid_x * (tile_size + self.intertilespace_size)
+        y = grid_y * (tile_size + self.intertilespace_size)
+
+        # Ajouter la bordure
+        x += self.border_size + offset_x
+        y += self.border_size + offset_y
+
+        return x, y
 
 class MapWindow(QMainWindow):
     def __init__(self):

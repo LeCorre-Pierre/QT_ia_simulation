@@ -103,6 +103,7 @@ class InfiniteGameFrame(QFrame):
         if grid_pos:  # Si la position est valide
             character = characters.Character("paysan", grid_pos.x(), grid_pos.y(), self.movement_strategy)
             self.characters.append(character)  # Ajoute le personnage à la liste
+        self.update()  # Redessiner la carte avec les personnages
 
     def reset_map(self):
         """ Réinitialise la carte à son état par défaut. """
@@ -126,6 +127,7 @@ class InfiniteGameFrame(QFrame):
         self.timer_interval = value
         self.timer.setInterval(self.timer_interval)
         self.speed_label.setText(f"Vitesse : {self.timer_interval} ms")  # Met à jour le label de la vitesse
+        self.update()  # Redessiner la carte avec les personnages
 
     def toggle_pause(self):
         """ Met en pause ou relance le défilement de la carte. """
@@ -143,6 +145,7 @@ class InfiniteGameFrame(QFrame):
         self.tick_count += 1
         if not self.is_paused:
             self.map.update()
+            self.characters = [character for character in self.characters if character.energy > 0]
             for c in self.characters:
                 action = self.nn_controller.decide_action(c, self.map, [], [], self.map.get_starting_positions())
                 c.perform_action(action)
@@ -162,14 +165,24 @@ class InfiniteGameFrame(QFrame):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        for character in self.characters:
-            x = character.x * self.grid_size * self.scale_factor
-            y = character.y * self.grid_size * self.scale_factor
-            character_pixmap = self.tilechar_manager.prefab_characters[2]  # Par exemple, utiliser le premier personnage
 
-            # Dessiner le personnage à la position x, y
-            painter.drawPixmap(x, y, character_pixmap)
-        painter.end()
+        # Dessiner la carte (en utilisant map_frame)
+        self.map_frame.draw(painter)
+
+        # Obtenir la position de map_frame pour ajuster la position des personnages
+        map_pos = self.map_frame.pos()  # Position de map_frame dans InfiniteGameFrame
+        offset_x = map_pos.x()
+        offset_y = map_pos.y()
+
+        # Dessiner les personnages par-dessus la carte
+        for character in self.characters:
+            # Calculer la position ajustée du personnage
+            x, y = self.map_frame.convert_to_pixel(character.x, character.y)
+
+            # Dessiner le personnage en utilisant tilechar_manager
+            self.tilechar_manager.draw(painter, x, y)
+
+        painter.end()  # Terminer le QPainter
 
 
 
