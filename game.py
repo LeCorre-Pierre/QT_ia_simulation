@@ -33,7 +33,12 @@ class Game:
             for c in self.characters:
                 if c.energy > 0:
                     all_characters_out_of_energy = False  # Si un personnage a encore de l'énergie
-                    action = callback_action_selection(callback_self, c, self.map, [], [], self.map.get_starting_positions())
+
+                    if random.random() < 0.1:
+                        # Choisir une action aléatoire avec une petite probabilité
+                        action = random.choice(["UP", "DOWN", "RIGHT", "LEFT"])
+                    else:
+                        action = callback_action_selection(callback_self, c, self.map, [], [], self.map.get_starting_positions())
                     c.perform_action(action)
                 else:
                     c.perform_action("WAIT")

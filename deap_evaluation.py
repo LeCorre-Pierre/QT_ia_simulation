@@ -41,13 +41,7 @@ def evaluate_individual(individual, nb_turn_per_simulation, nb_characters, map_d
     return fitness,
 
 
-def run_evolution(nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, nb_characters, IAs, result_queue, map_data):
-    global stop_evolution
-    stop_evolution = False  # Réinitialiser le flag
-
-    # Flag global pour arrêter l'algorithme
-    stop_evolution = False
-
+def run_evolution(nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, nb_characters, IAs, result_queue, map_data, stop_event):
     # Définir la classe Fitness et Individu pour DEAP
     if not hasattr(creator, "FitnessMax"):
         creator.create("FitnessMax", base.Fitness, weights=(1.0,))
@@ -76,14 +70,73 @@ def run_evolution(nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, 
     stats.register("min", np.min)
     stats.register("max", np.max)
     popu = None
-    try:
-        popu, log = algorithms.eaSimple(population,
+    popu, log = custom_eaSimple(population,
                                         toolbox,
                                         cxpb=cxpb,
                                         mutpb=mutpb,
                                         ngen=nb_gener,
                                         stats=stats,
-                                        verbose=True)
-    except StopIteration:
-        print("Évolution stoppée par l'utilisateur.")
+                                        verbose=True,
+                                        stop_event=stop_event)
     result_queue.put(popu)  # Met le résultat dans la queue
+
+
+def custom_eaSimple(population, toolbox, cxpb, mutpb, ngen, stats=None, halloffame=None, verbose=__debug__, stop_event=None):
+    logbook = tools.Logbook()
+    logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
+
+    # Évaluer la population initiale
+    fitnesses = list(map(toolbox.evaluate, population))
+    for ind, fit in zip(population, fitnesses):
+        ind.fitness.values = fit
+
+    if halloffame is not None:
+        halloffame.update(population)
+
+    record = stats.compile(population) if stats else {}
+    logbook.record(gen=0, nevals=len(population), **record)
+    if verbose:
+        print(logbook.stream)
+
+    # Boucle d'évolution
+    for gen in range(1, ngen + 1):
+        if stop_event.is_set():  # Vérifie si l'événement d'arrêt est déclenché
+            print("Évolution stoppée par l'utilisateur.")
+            break
+
+        # Sélectionner les individus pour la prochaine génération
+        offspring = toolbox.select(population, len(population))
+        offspring = list(map(toolbox.clone, offspring))
+
+        # Appliquer le croisement et la mutation
+        for child1, child2 in zip(offspring[::2], offspring[1::2]):
+            if random.random() < cxpb:
+                toolbox.mate(child1, child2)
+                del child1.fitness.values
+                del child2.fitness.values
+
+        for mutant in offspring:
+            if random.random() < mutpb:
+                toolbox.mutate(mutant)
+                del mutant.fitness.values
+
+        # Réévaluer les individus mutés
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        fitnesses = map(toolbox.evaluate, invalid_ind)
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
+
+        # Remplacer la population par les descendants
+        population[:] = offspring
+
+        # Mettre à jour le Hall of Fame
+        if halloffame is not None:
+            halloffame.update(population)
+
+        # Compiler les statistiques et enregistrer le log
+        record = stats.compile(population) if stats else {}
+        logbook.record(gen=gen, nevals=len(invalid_ind), **record)
+        if verbose:
+            print(logbook.stream)
+
+    return population, logbook

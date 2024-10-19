@@ -124,6 +124,7 @@ class SearchWindow(QDialog):
         main_layout.addWidget(self.log_output)
 
     def start_search(self):
+        global stop_evolution
         if self.search_thread is not None and self.search_thread.is_alive():
             QMessageBox.warning(self, "Alerte", "La recherche est déjà en cours.")
             return
@@ -149,12 +150,13 @@ class SearchWindow(QDialog):
         m.load_map_from_file("maps/map_0.txt")
 
         result_queue = queue.Queue()
+        self.stop_event = threading.Event()  # Créer l'événement pour l'arrêt
         # Démarrer le thread
         self.running = True
         self.search_thread = threading.Thread(
             target=run_evolution,
             args=(
-            nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, nb_characters, IAs, result_queue, m.map_data)
+            nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, nb_characters, IAs, result_queue, m.map_data, self.stop_event)
         )
         self.search_thread.start()
 
@@ -164,17 +166,25 @@ class SearchWindow(QDialog):
         self.timer.start(100)  # Vérifier toutes les 100 millisecondes
 
     def check_thread_completion(self, result_queue):
-        if not self.search_thread.is_alive():  # Si le thread a terminé
-            self.timer.stop()  # Arrêter le timer
-            population = result_queue.get()  # Récupérer le résultat
-            self.callback_per_gen_search_window(population)
-            self.sort_ia_list()
+        if not self.search_thread.is_alive():
+            self.timer.stop()
+            self.log_output.append("Recherche terminée.")
+
+            # Récupérer les résultats (si la recherche n'a pas été arrêtée prématurément)
+            try:
+                results = result_queue.get_nowait()
+                self.callback_per_gen_search_window(results)
+            except queue.Empty:
+                self.log_output.append("Aucun résultat disponible (recherche arrêtée ou aucun IA générée).")
 
     def stop_search(self):
         if self.search_thread and self.search_thread.is_alive():
             # Logique pour arrêter la recherche
-            self.running = False
-            self.search_thread.join()  # Attendre que le thread se termine
+            self.log_output.append("Demande d'arrêt de la recherche...")
+            self.stop_event.set()  # Déclenche l'événement d'arrêt
+
+            # Attendre que le thread se termine
+            self.search_thread.join()
             self.log_output.append("Recherche arrêtée.")
 
     def callback_per_gen_search_window(self, population):
