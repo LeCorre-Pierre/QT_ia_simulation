@@ -3,6 +3,34 @@ from neural_network_controller import *
 import functools
 
 
+def randomize(map_data, percent_flower=0.5, percent_grass=0.2):
+    """
+    Modifie la carte en remplaçant 50% des MAP_FLOWER_0 par des MAP_PATH
+    et 20% des MAP_GRASS_START par des MAP_PATH.
+    """
+    # Créer une copie de la carte initiale pour la modification
+    modified_map = [row.copy() for row in map_data]
+
+    # Trouver les positions des MAP_FLOWER_0 et MAP_GRASS_START
+    flower_positions = [(x, y) for x, row in enumerate(modified_map) for y, cell in enumerate(row) if
+                        cell == MAP_FLOWER_0]
+    grass_start_positions = [(x, y) for x, row in enumerate(modified_map) for y, cell in enumerate(row) if
+                             cell == MAP_GRASS_START]
+
+    # Remplacer 50% des MAP_FLOWER_0 par des MAP_PATH
+    num_flowers_to_replace = int(percent_flower * len(flower_positions))
+    flowers_to_replace = random.sample(flower_positions, num_flowers_to_replace)
+    for x, y in flowers_to_replace:
+        modified_map[x][y] = MAP_PATH
+
+    # Remplacer 20% des MAP_GRASS_START par des MAP_PATH
+    num_grass_start_to_replace = int(percent_grass * len(grass_start_positions))
+    grass_start_to_replace = random.sample(grass_start_positions, num_grass_start_to_replace)
+    for x, y in grass_start_to_replace:
+        modified_map[x][y] = MAP_PATH
+
+    return modified_map
+
 def generate_individual(IAs):
     """
     Génère un individu pour une population évolutive.
@@ -28,15 +56,21 @@ def generate_individual(IAs):
         return ia
 
 
-def evaluate_individual(individual, nb_turn_per_simulation, nb_characters, map_data):
-
+def evaluate_individual(individual, nb_turn_per_simulation, nb_characters, map_data, randomize_map=True):
+    random_map_data = None
     nn_controller = NeuralNetworkController(58, 32, 32, 5)
 
     # Initialiser le contrôleur de réseau de neurones avec les poids de l'individu
     nn_controller.update_weights(individual)
 
+    # Générer une nouvelle carte modifiée pour cette génération
+    if randomize_map:
+        random_map_data = randomize(map_data)
+    else:
+        random_map_data = map_data
+
     # Exécuter la simulation et renvoyer le score de fitness
-    fitness = nn_controller.evaluate(map_data, nb_turn_per_simulation, nb_characters)
+    fitness = nn_controller.evaluate(random_map_data, nb_turn_per_simulation, nb_characters)
 
     return fitness,
 
@@ -78,6 +112,12 @@ def run_evolution(nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, 
                                         stats=stats,
                                         verbose=True,
                                         stop_event=stop_event)
+
+    # Réévaluer chaque individu sur la carte finale
+    for ind in popu:
+        fitness = evaluate_individual(ind, nb_turn_per_simulation, nb_characters, map_data, randomize_map=False)
+        ind.fitness.values = fitness  # Mettre à jour le fitness de l'individu
+
     result_queue.put(popu)  # Met le résultat dans la queue
 
 

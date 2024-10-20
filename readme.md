@@ -41,3 +41,8 @@ Dans le log, les différentes actions sont indiquées
 
 Précision sur les simulations
 Les simulations sont basées sur le module DEAP
+
+Pour ajouter de la diversité dans les Ias générées, la carte de base sera modifiée entre chaque simulation.
+Pour une génération données, toutes les IA jouerons sur la même carte, par contre l'evaluation finale se fera sur la carte initiale.
+50% des MAP_FLOWER_0 = 27 sont remplacés par des MAP_PATH = 1
+20% des MAP_GRASS_START = 2 sont remplacés par des MAP_PATH = 1

@@ -200,3 +200,4 @@ class Map:
                 row = [int(tile) for tile in line.split()]
                 # Ajouter la ligne à la carte
                 self.map_data.append(row)
+

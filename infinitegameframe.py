@@ -27,7 +27,7 @@ class InfiniteGameFrame(QFrame):
         # Gestion du temps de défilement
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_map)
-        self.timer_interval = 500  # Intervalle initial (500ms)
+        self.timer_interval = 100  # Intervalle initial (500ms)
         self.timer.start(self.timer_interval)
 
         self.scale_factor = 2

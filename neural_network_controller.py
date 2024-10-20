@@ -232,6 +232,9 @@ class NeuralNetworkController:
             action = random.choice(["UP", "DOWN", "RIGHT", "LEFT"])
         return action
 
+    def randomize_map(self, map_data):
+        return map.randomize(map_data)
+
     def evaluate(self, map_data, nb_turn_per_simulation, nb_characters, callback_action_selection=decide_action):
         """
         Évalue un individu en simulant une partie et en calculant un score basé sur la performance.
