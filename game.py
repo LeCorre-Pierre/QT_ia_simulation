@@ -58,6 +58,7 @@ class Game:
                     "Reset de l'énergie du personnage et dépose des fleur contre des points"
                     c.reset_energy()
                     if c.flowers:
+                        c.reset_energy()
                         self.score += c.flowers * 100
                         c.drop_flowers()
 
