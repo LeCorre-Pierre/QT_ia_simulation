@@ -1,7 +1,7 @@
 import numpy as np
 
 class NeuralNetwork:
-    def __init__(self, input_size=58, hidden_size_1=32, hidden_size_2=16, output_size=5):
+    def __init__(self, input_size=33, hidden_size_1=32, hidden_size_2=32, output_size=5):
         """
         Initialise le réseau de neurones avec des poids aléatoires.
         :param input_size: Nombre de neurones en entrée.

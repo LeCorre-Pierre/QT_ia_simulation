@@ -58,7 +58,7 @@ def generate_individual(IAs):
 
 def evaluate_individual(individual, nb_turn_per_simulation, nb_characters, map_data, randomize_map=True):
     random_map_data = None
-    nn_controller = NeuralNetworkController(58, 32, 32, 5)
+    nn_controller = NeuralNetworkController(33, 32, 32, 5)
 
     # Initialiser le contrôleur de réseau de neurones avec les poids de l'individu
     nn_controller.update_weights(individual)

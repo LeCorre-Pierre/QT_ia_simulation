@@ -38,7 +38,7 @@ class Game:
                     #    # Choisir une action aléatoire avec une petite probabilité
                     #    action = random.choice(["UP", "DOWN", "RIGHT", "LEFT"])
                     #else:
-                    action = callback_action_selection(callback_self, c, self.map, [], [], self.map.get_starting_positions())
+                    action = callback_action_selection(callback_self, c, self.map, self.map.get_starting_positions())
                     c.perform_action(action)
                 else:
                     c.perform_action("WAIT")
@@ -57,7 +57,6 @@ class Game:
 
                 if self.map.is_on_starting_point(x, y):
                     "Reset de l'énergie du personnage et dépose des fleur contre des points"
-                    c.reset_energy()
                     if c.flowers:
                         c.reset_energy()
                         self.score += c.flowers * 100

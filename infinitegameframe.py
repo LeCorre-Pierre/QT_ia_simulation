@@ -39,7 +39,7 @@ class InfiniteGameFrame(QFrame):
 
         # Initialisation des composants
         self.initUI()
-        self.nn_controller = neural_network_controller.NeuralNetworkController(58, 32, 32, 5)
+        self.nn_controller = neural_network_controller.NeuralNetworkController()
 
     def initUI(self):
         # Layout principal
@@ -147,7 +147,7 @@ class InfiniteGameFrame(QFrame):
             self.map.update()
             self.characters = [character for character in self.characters if character.energy > 0]
             for c in self.characters:
-                action = self.nn_controller.decide_action(c, self.map, [], [], self.map.get_starting_positions())
+                action = self.nn_controller.decide_action(c, self.map, self.map.get_starting_positions())
                 c.perform_action(action)
                 x, y = c.get_pos()
                 if self.map.is_flower(x, y) and not c.is_full():

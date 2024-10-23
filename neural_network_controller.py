@@ -9,7 +9,7 @@ import numpy as np
 from game import *
 from neural_network import *
 
-NNC_INPUT_WEIGHT_NUMBER = 58
+NNC_INPUT_WEIGHT_NUMBER = 33
 NNC_HIDDEN_LAYER_1_WEIGHT_NUMBER = 32
 NNC_HIDDEN_LAYER_2_WEIGHT_NUMBER = 32
 NNC_OUTPUT_WEIGHT_NUMBER = 5
@@ -17,11 +17,11 @@ NNC_BIAS_HIDDEN_LAYER_1 = 32
 NNC_BIAS_HIDDEN_LAYER_2 = 32
 NNC_BIAS_OUTPUT = 5
 NNC_TOTAL_WEIGHT_NUMBER = (
-        NNC_INPUT_WEIGHT_NUMBER * NNC_HIDDEN_LAYER_1_WEIGHT_NUMBER  # 1856
-        + NNC_HIDDEN_LAYER_1_WEIGHT_NUMBER * NNC_HIDDEN_LAYER_2_WEIGHT_NUMBER  # 512
-        + NNC_HIDDEN_LAYER_2_WEIGHT_NUMBER * NNC_OUTPUT_WEIGHT_NUMBER  # 80
-        + NNC_BIAS_HIDDEN_LAYER_1 + NNC_BIAS_HIDDEN_LAYER_2 + NNC_BIAS_OUTPUT  # 53
-)  # => 2501
+        NNC_INPUT_WEIGHT_NUMBER * NNC_HIDDEN_LAYER_1_WEIGHT_NUMBER
+        + NNC_HIDDEN_LAYER_1_WEIGHT_NUMBER * NNC_HIDDEN_LAYER_2_WEIGHT_NUMBER
+        + NNC_HIDDEN_LAYER_2_WEIGHT_NUMBER * NNC_OUTPUT_WEIGHT_NUMBER
+        + NNC_BIAS_HIDDEN_LAYER_1 + NNC_BIAS_HIDDEN_LAYER_2 + NNC_BIAS_OUTPUT
+)
 
 STATE_BUSH = 0
 STATE_PATH = 1
@@ -168,17 +168,18 @@ def get_delta_to_closest_start(x, y, starting_positions):
         return None  # Aucun point de départ trouvé
 
 
-def get_input_vector(c: Character, m: Map, allies, enemies, starting_positions):
+def get_input_vector(c: Character, m: Map, starting_positions):
     (x, y) = c.get_pos()
     map_state = to_map_state(m, x, y)
-    friends_enemies = to_friends_enemies(x, y, allies, enemies)
+    #friends_enemies = to_friends_enemies(x, y, allies, enemies)
     dx, dy = get_delta_to_closest_start(x, y, starting_positions)
     flower_stock = c.flowers
     health = 0
     energy = c.energy
     action_indices = [actions.index(action) for action in c.last_moves]
     # Construire le vecteur d'entrée pour le réseau de neurones
-    return map_state + friends_enemies + [dx, dy] + [flower_stock] + [health, energy] + action_indices
+    #return map_state + friends_enemies + [dx, dy] + [flower_stock] + [health, energy] + action_indices
+    return map_state + [dx, dy] + [flower_stock] + [health, energy] + action_indices
 
 
 def map_action(action_index):
@@ -189,7 +190,7 @@ def map_action(action_index):
 
 
 class NeuralNetworkController:
-    def __init__(self, input_layer_size=58, hidden_layer_1_size=32, hidden_layer_2_size=32, output_layer_size=5):
+    def __init__(self, input_layer_size=33, hidden_layer_1_size=32, hidden_layer_2_size=32, output_layer_size=5):
         self.neural_network = NeuralNetwork(input_layer_size, hidden_layer_1_size, hidden_layer_2_size, output_layer_size)
         self.input_size = input_layer_size
         self.hidden_size_1 = hidden_layer_1_size
@@ -219,17 +220,14 @@ class NeuralNetworkController:
 
         self.neural_network.set_weights([W1, W2, W3, b1, b2, b3])
 
-    def decide_action(self, c: Character, m: Map, allies, enemies, starting_positions):
-        input_vector = get_input_vector(c, m, [], [], starting_positions)
+    def decide_action(self, c: Character, m: Map, starting_positions):
+        input_vector = get_input_vector(c, m, starting_positions)
         # Obtenir l'action du réseau de neurones
         output_vector = self.neural_network.predict(input_vector)
         # Trouver l'index de l'action avec la valeur la plus élevée (argmax)
         action_index = np.argmax(output_vector)
         # Mapper l'index à une action
         action = actions[action_index]
-        if random.random() < 0.1:
-            # Choisir une action aléatoire avec une petite probabilité
-            action = random.choice(["UP", "DOWN", "RIGHT", "LEFT"])
         return action
 
     def randomize_map(self, map_data):
@@ -250,7 +248,7 @@ class NeuralNetworkController:
 
 if __name__ == "__main__":
     m = Map()
-    m.load_map_from_file("mnt/data/map_0.txt")
+    m.load_map_from_file("maps/map_0.txt")
     state_1 = to_map_state(m, 0, 0)
     state_2 = to_map_state(m, 6, 6)
     state_3 = to_map_state(m, 0, 12)
@@ -265,10 +263,5 @@ if __name__ == "__main__":
     c = Character("Paysan", 5, 5, None)
     x, y = c.get_pos()
 
-    # Obtenir l'état des alliés et ennemis autour du personnage
-    state = to_friends_enemies(x, y, allies, enemies)
-    print("Allies and enemies")
-    print(state)  # Affichera la grille 5x5 avec des valeurs 0, 1, 2
-
-    input_vector = get_input_vector(c, m, allies, enemies)
+    input_vector = get_input_vector(c, m, [(5,7)])
     print(input_vector)
