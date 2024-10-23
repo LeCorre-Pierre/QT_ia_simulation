@@ -49,6 +49,7 @@ class Game:
                     self.score += 10
                 else:
                     self.map.trample(x, y)
+                    self.score -= 1
 
                 if (x, y) not in visited_positions:
                     visited_positions.add((x, y))
