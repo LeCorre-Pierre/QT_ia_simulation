@@ -233,13 +233,13 @@ class NeuralNetworkController:
     def randomize_map(self, map_data):
         return map.randomize(map_data)
 
-    def evaluate(self, map_data, nb_turn_per_simulation, nb_characters, callback_action_selection=decide_action):
+    def evaluate(self, map_data, nb_turn_per_simulation, nb_characters, callback_action_selection=decide_action, start_pos=(7,7)):
         """
         Évalue un individu en simulant une partie et en calculant un score basé sur la performance.
         """
 
         # Créer une instance de la classe Game avec les paramètres donnés
-        game = Game(map_data, nb_turn_per_simulation, nb_characters)
+        game = Game(map_data, nb_turn_per_simulation, nb_characters, start_pos)
 
         # Exécuter la simulation du jeu
         fitness = game.run(self, callback_action_selection)

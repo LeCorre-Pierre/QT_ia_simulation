@@ -3,7 +3,7 @@ from neural_network_controller import *
 import functools
 
 
-def randomize(map_data, percent_flower=0.5, percent_grass=0.2):
+def randomize_map(map_data, percent_flower=0.5, percent_grass=0.2):
     """
     Modifie la carte en remplaçant 50% des MAP_FLOWER_0 par des MAP_PATH
     et 20% des MAP_GRASS_START par des MAP_PATH.
@@ -31,6 +31,29 @@ def randomize(map_data, percent_flower=0.5, percent_grass=0.2):
 
     return modified_map
 
+
+def randomize_pos(pos, min_delta=-1, max_delta=1):
+    """
+    Ajoute un décalage aléatoire aux coordonnées de la position donnée.
+
+    Args:
+        pos (tuple): La position d'origine, représentée sous forme de tuple (x, y).
+        min_delta (int): La valeur minimale du décalage à ajouter à chaque coordonnée.
+        max_delta (int): La valeur maximale du décalage à ajouter à chaque coordonnée.
+
+    Returns:
+        tuple: Une nouvelle position avec un décalage aléatoire appliqué.
+    """
+    x, y = pos  # Extraire les coordonnées
+
+    # Générer un décalage aléatoire pour chaque coordonnée
+    dx = random.randint(min_delta, max_delta)
+    dy = random.randint(min_delta, max_delta)
+
+    # Retourner la nouvelle position avec le décalage appliqué
+    return x + dx, y + dy
+
+
 def generate_individual(IAs):
     """
     Génère un individu pour une population évolutive.
@@ -56,21 +79,15 @@ def generate_individual(IAs):
         return ia
 
 
-def evaluate_individual(individual, nb_turn_per_simulation, nb_characters, map_data, randomize_map=True):
+def evaluate_individual(individual, nb_turn_per_simulation, nb_characters, map_data, start_pos=(7,7)):
     random_map_data = None
     nn_controller = NeuralNetworkController(33, 32, 32, 5)
 
     # Initialiser le contrôleur de réseau de neurones avec les poids de l'individu
     nn_controller.update_weights(individual)
 
-    # Générer une nouvelle carte modifiée pour cette génération
-    if randomize_map:
-        random_map_data = randomize(map_data)
-    else:
-        random_map_data = map_data
-
     # Exécuter la simulation et renvoyer le score de fitness
-    fitness = nn_controller.evaluate(random_map_data, nb_turn_per_simulation, nb_characters)
+    fitness = nn_controller.evaluate(map_data, nb_turn_per_simulation, nb_characters, start_pos=start_pos)
 
     return fitness,
 
@@ -93,6 +110,8 @@ def run_evolution(nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, 
     toolbox.register("mate", tools.cxTwoPoint)
     toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.2, indpb=0.2)
     toolbox.register("select", tools.selTournament, tournsize=4)
+    toolbox.register("select_map", randomize_map, map_data)
+    toolbox.register("select_position", randomize_pos, (7,7))
 
     # Initialiser la population
     population = toolbox.population(n=nb_ia_per_gen)
@@ -115,7 +134,7 @@ def run_evolution(nb_gener, nb_ia_per_gen, cxpb, mutpb, nb_turn_per_simulation, 
 
     # Réévaluer chaque individu sur la carte finale
     for ind in popu:
-        fitness = evaluate_individual(ind, nb_turn_per_simulation, nb_characters, map_data, randomize_map=False)
+        fitness = evaluate_individual(ind, nb_turn_per_simulation, nb_characters, map_data)
         ind.fitness.values = fitness  # Mettre à jour le fitness de l'individu
 
     result_queue.put(popu)  # Met le résultat dans la queue
@@ -160,10 +179,17 @@ def custom_eaSimple(population, toolbox, cxpb, mutpb, ngen, stats=None, halloffa
                 toolbox.mutate(mutant)
                 del mutant.fitness.values
 
+        # Création de la carte légèrement modifiée
+        random_map_data = toolbox.select_map()
+
+        # Création de la position initiale légèrement modifiée
+        random_initial_position = toolbox.select_position()
+
         # Réévaluer les individus mutés
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        fitnesses = map(toolbox.evaluate, invalid_ind)
-        for ind, fit in zip(invalid_ind, fitnesses):
+
+        for ind in invalid_ind:
+            fit = toolbox.evaluate(ind, map_data=random_map_data, start_pos=random_initial_position)
             ind.fitness.values = fit
 
         # Remplacer la population par les descendants

@@ -65,6 +65,20 @@ class Map:
     def random_init(self):
         self.map_data = [[random.choice([MAP_GRASS_END, MAP_PLANT_START, MAP_PLANT_1, MAP_PLANT_2, MAP_PLANT_END, MAP_FLOWER_0]) for _ in range(self.map_size)] for _ in range(self.map_size)]
 
+    def get_adjacent_positions(self, x, y):
+        # Liste des déplacements pour les 4 directions adjacentes (haut, bas, gauche, droite)
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        adjacent_positions = []
+
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            # Vérifier que la nouvelle position est bien dans les limites de la carte
+            if 0 <= nx < self.map_size and 0 <= ny < self.map_size:
+                adjacent_positions.append((nx, ny))
+
+        return adjacent_positions
+
+
     def is_on_starting_point(self, x, y):
         """
         Vérifie si une position se trouve sur un point de départ.

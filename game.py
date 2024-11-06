@@ -5,7 +5,8 @@ from movement_strategy import *
 
 
 class Game:
-    def __init__(self, map_data, game_turn_number, characters_number=1):
+    def __init__(self, map_data, game_turn_number, characters_number=1, start_pos=(7, 7)):
+        x,y = start_pos
         self.game_turn_number = game_turn_number
         self.map = Map(map_data)
         self.starting_points = self.map.get_starting_positions()
@@ -13,7 +14,7 @@ class Game:
         self.score = 0
         movement_strategy = MapMovementStrategy(self.map.map_size)
         for i in range(characters_number):
-            c = Character("paysan", 7, 7, movement_strategy)
+            c = Character("paysan", x, y, movement_strategy)
             self.characters.append(c)
         self.turn_states = []
 
@@ -43,17 +44,20 @@ class Game:
                 else:
                     c.perform_action("WAIT")
                 x, y = c.get_pos()
+                flower_nearby = any(self.map.is_flower(nx, ny) for nx, ny in self.map.get_adjacent_positions(x, y))
                 if self.map.is_flower(x, y) and not c.is_full():
                     self.map.cut_flower(x, y)
                     c.collect_flower()
                     self.score += 10
                 else:
                     self.map.trample(x, y)
-                    self.score -= 1
-
+                    if flower_nearby:
+                        self.score -= 25
+                    else:
+                        self.score -= 5
                 if (x, y) not in visited_positions:
                     visited_positions.add((x, y))
-                    self.score += 10  # Récompense pour avoir exploré une nouvelle position
+                    self.score += 50  # Récompense pour avoir exploré une nouvelle position
 
                 if self.map.is_on_starting_point(x, y):
                     "Reset de l'énergie du personnage et dépose des fleur contre des points"
